@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: fixr
+  datasource:
+    url: ${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VIRTUAL_HOST:/}
+    listener:
+      simple:
+        default-requeue-rejected: ${REQUEUE_REJECTED:false}
+        concurrency: ${CONCURRENCY:3}
+        max-concurrency: ${MAX_CONCURRENCY:9}
+        retry:
+          enabled: ${RETRY_ENABLED:true}
+          max-retries: ${RETRY_MAX_RETRIES:3}
+          initial-interval: ${RETRY_INITIAL_INTERVAL:1000}
+          multiplier: ${EXPONENTIAL_BACKOFF_MULTIPLIER:2.0}
+          max-interval: ${RETRY_MAX_INTERVAL:10000}
+  ai:
+    model:
+      embedding: none
+
+fixr:
+  rabbit-mq:
+    fixr-exchange-name: ${FIXR_RABBITMQ_EXCHANGE:fixr.exchange}
+    request-queue: ${FIXR_RABBITMQ_REQUEST_QUEUE:fixr.embedding.request}
+    completed-queue: ${FIXR_RABBITMQ_COMPLETED_QUEUE:fixr.embedding.completed}
+    request-queue-rk: ${FIXR_RABBITMQ_REQUEST_ROUTING_KEY:embedding.request}
+    request-failed-rk: ${FIXR_RABBITMQ_REQUEST_FAILED_ROUTING_KEY:embedding.failed}
+    completed-queue-rk: ${FIXR_RABBITMQ_COMPLETED_ROUTING_KEY:embedding.completed}
+    dlx: ${FIXR_RABBITMQ_DEAD_LETTER_EXCHANGE:fixr.dead-letter}
+    dlq: ${FIXR_RABBITMQ_DEAD_LETTER_QUEUE:fixr.embedding.dead-letter}
+    dlrk: ${FIXR_RABBITMQ_DEAD_LETTER_ROUTING_KEY:embedding.dead-letter}
