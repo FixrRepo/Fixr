@@ -1,9 +1,8 @@
-package com.inspaya.fixr.redis;
+package com.inspaya.fixr.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;

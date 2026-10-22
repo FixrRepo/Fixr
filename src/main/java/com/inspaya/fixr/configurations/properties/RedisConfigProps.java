@@ -1,4 +1,4 @@
-package com.inspaya.fixr.redis;
+package com.inspaya.fixr.configurations.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

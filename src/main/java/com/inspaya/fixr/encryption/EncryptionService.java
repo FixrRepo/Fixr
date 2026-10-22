@@ -15,7 +15,7 @@ import java.util.UUID;
 public class EncryptionService {
 
     static class KEKService{
-        private static final String plainKEK = UUID.randomUUID().toString();
+        private static final String plainKEK = "e7247b18-fe36-4715-ae2d-d37c6aa14c69";
 
         static SecretKey getKEK() {
             try {
@@ -34,14 +34,6 @@ public class EncryptionService {
     private static final int KEY_SIZE_BYTES = 48; // Key[32 bytes] + Tag[12 bytes]
     private static final int TAG_LENGHT_BITS = 128;
 
-
-    public static void main(String[] args) throws Exception{
-        String plainText = "Jedidiah Sylvanus";
-        byte[] cipherText = encryptData(plainText);
-        String stringCipherText = Base64.getEncoder().encodeToString(encryptData(plainText));
-        String decryptedText = decryptData(cipherText);
-        System.out.printf("PlainText: %s\nCipherText:%s\nDecryptedText: %s", plainText, stringCipherText, decryptedText);
-    }
 
     /**
      * */

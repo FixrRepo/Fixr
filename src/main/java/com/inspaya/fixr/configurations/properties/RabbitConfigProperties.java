@@ -1,4 +1,4 @@
-package com.inspaya.fixr.rabbitMq;
+package com.inspaya.fixr.configurations.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

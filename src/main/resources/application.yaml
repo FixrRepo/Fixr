@@ -1,6 +1,17 @@
 spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+      format_sql: true
   application:
     name: fixr
+  ai:
+    model:
+      embedding: none
+  flyway:
+    enabled: true
+
   datasource:
     url: ${POSTGRES_URL}
     username: ${POSTGRES_USERNAME}
@@ -28,18 +39,28 @@ spring:
           initial-interval: ${RETRY_INITIAL_INTERVAL:1000}
           multiplier: ${EXPONENTIAL_BACKOFF_MULTIPLIER:2.0}
           max-interval: ${RETRY_MAX_INTERVAL:10000}
-  ai:
-    model:
-      embedding: none
 
 fixr:
+  security:
+    profile: Dev
+    secretKey: 01a123b7-d2cf-7541-8772-74db437ce14d
+    accessTokenExpirationMinutes: 30
+    refreshTokenExpirationDays: 7
+    domain: localhost
+    allowedOrigins: ${ALLOWED_ORIGINS}
   rabbit-mq:
     fixr-exchange-name: ${FIXR_RABBITMQ_EXCHANGE:fixr.exchange}
-    request-queue: ${FIXR_RABBITMQ_REQUEST_QUEUE:fixr.embedding.request}
-    completed-queue: ${FIXR_RABBITMQ_COMPLETED_QUEUE:fixr.embedding.completed}
+    request-queue: ${FIXR_RABBITMQ_REQUEST_QUEUE:embedding.request}
+    completed-queue: ${FIXR_RABBITMQ_COMPLETED_QUEUE:embedding.completed}
     request-queue-rk: ${FIXR_RABBITMQ_REQUEST_ROUTING_KEY:embedding.request}
     request-failed-rk: ${FIXR_RABBITMQ_REQUEST_FAILED_ROUTING_KEY:embedding.failed}
     completed-queue-rk: ${FIXR_RABBITMQ_COMPLETED_ROUTING_KEY:embedding.completed}
     dlx: ${FIXR_RABBITMQ_DEAD_LETTER_EXCHANGE:fixr.dead-letter}
-    dlq: ${FIXR_RABBITMQ_DEAD_LETTER_QUEUE:fixr.embedding.dead-letter}
+    dlq: ${FIXR_RABBITMQ_DEAD_LETTER_QUEUE:embedding.dead-letter}
     dlrk: ${FIXR_RABBITMQ_DEAD_LETTER_ROUTING_KEY:embedding.dead-letter}
+  report:
+    embedding:
+      proximity-threshold: ${FIXR_PROXIMITY_THRESHOLD}
+      distance-weight: ${FIXR_EMBEDDING_PROXIMITY_WEIGHT}
+      text-weight: ${FIXR_EMBEDDING_TEXT_WEIGHT}
+      visuals-weight: ${FIXR_EMBEDDING_VISUALS_WEIGHT}

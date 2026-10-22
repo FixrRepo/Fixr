@@ -1,5 +1,6 @@
-package com.inspaya.fixr.redis;
+package com.inspaya.fixr.configurations;
 
+import com.inspaya.fixr.configurations.properties.RedisConfigProps;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -16,8 +17,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
-//@Configuration
-//@EnableConfigurationProperties(RedisConfigProps.class)
+@Configuration
+@EnableConfigurationProperties(RedisConfigProps.class)
 @RequiredArgsConstructor
 public class RedisConfiguration {
     private final RedisConfigProps props;
