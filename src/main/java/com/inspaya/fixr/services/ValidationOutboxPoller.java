@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ValidationOutboxPoller {
     private final ValidationProcessingService processingService;
 
-    @Scheduled(fixedDelayString = "${fixr.validation.outbox-poll-interval-ms:1000}")
+    @Scheduled(fixedDelayString = "${fixr.validation.outbox-poll-interval-ms:5000}")
     public void poll() {
         try {
             processingService.processOne();

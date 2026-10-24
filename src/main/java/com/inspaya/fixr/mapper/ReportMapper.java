@@ -2,6 +2,7 @@ package com.inspaya.fixr.mapper;
 
 import com.inspaya.fixr.dtos.CoordinateDto;
 import com.inspaya.fixr.dtos.LocationDto;
+import com.inspaya.fixr.dtos.MinimalFixrUserDetails;
 import com.inspaya.fixr.dtos.ReportFeedResponseDto;
 import com.inspaya.fixr.dtos.UserReportResponseDto;
 import com.inspaya.fixr.entities.Report;
@@ -41,6 +42,16 @@ public interface ReportMapper {
     default void updateFeedReportResponse(Report report, @MappingTarget ReportFeedResponseDto feedDto){
         feedDto.setLocation( convertToLocation(report) );
         feedDto.setCategory( report.getCategory().getName() );
+        if (Boolean.TRUE.equals(report.getIsAnonymous())) {
+            feedDto.setReporter(new MinimalFixrUserDetails(anonymousUsername(report), null));
+        }else{
+            feedDto.setReporter(new MinimalFixrUserDetails(report.getReporter().getUsername(), report.getReporter().getCredibilityScore()));
+        }
+    }
+
+    /** Creates a stable, display-only identity that cannot resolve to a FixrUser account. */
+    default String anonymousUsername(Report report) {
+        return "anonymous-" + report.getReportId().toString().substring(0, 6);
     }
 
     default LocationDto convertToLocation(Report report){

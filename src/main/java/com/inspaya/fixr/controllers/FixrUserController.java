@@ -6,6 +6,7 @@ import com.inspaya.fixr.services.ReportService;
 import com.inspaya.fixr.security.details.FixrUserSecurityDetail;
 import com.inspaya.fixr.entities.FixrUser;
 import com.inspaya.fixr.services.FixrUserService;
+import com.inspaya.fixr.services.UserValidityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

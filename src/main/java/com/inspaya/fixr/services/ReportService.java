@@ -50,6 +50,7 @@ public class ReportService {
     private final ReportMediaRepo mediaRepo;
     private final VideoEmbeddingRepo videoEmbeddingRepo;
     private final ReportRepo repo;
+    private final FixrUserRepo fixrUserRepo;
     private final ReportCategoryRepo categoryRepo;
     private final ReportCommentRepo commentRepo;
     private final ReportVoteRepo voteRepo;
@@ -121,6 +122,18 @@ public class ReportService {
         System.out.println(reports.getContent().size());
         List<UserReportResponseDto> reportResponseDtos = mapper.convertToUserReportResponses(reports.getContent());
         return new PagedModel<>(new PageImpl<>(reportResponseDtos, reports.getPageable(), reports.getTotalElements()));
+    }
+
+    @Transactional(readOnly = true)
+    public PagedModel<ReportFeedResponseDto> getPublicUserReports(
+            String username, int page, int pageSize, FixrUser viewer) {
+        PageRequest request = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        FixrUser user = fixrUserRepo.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Public profile not found"));
+        Page<Report> reports = repo.findAllByReporterAndIsAnonymousFalse(user, request);
+        List<ReportFeedResponseDto> responses = mapper.convertToReportFeedResponses(reports.getContent());
+        populateVoteSummary(reports.getContent(), responses, viewer);
+        return new PagedModel<>(new PageImpl<>(responses, reports.getPageable(), reports.getTotalElements()));
     }
 
     public @Nullable UserReportResponseDto getUserSubmittedReport(String reportId, FixrUser user) {

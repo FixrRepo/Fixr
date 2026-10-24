@@ -75,7 +75,7 @@ Query parameters (all optional):
 
 **Preconditions:** `status` must be a valid enum name; pagination and order are passed to the feed service. The controller does not declare explicit range validation for these values.
 
-**Success:** `200 OK`, Spring Data `PagedModel<ReportFeedResponseDto>`. Each report has `reportId`, `description`, `location`, `reporter`, `distance`, `mediaList`, `status`, `validationStatus`, `category`, `createdAt`, `upvoteCount`, `downvoteCount`, and optionally `viewerVote` (`UPVOTE` or `DOWNVOTE`). `status` is the report processing/publication lifecycle; `validationStatus` is the separate community assessment (`PROVISIONAL`, `SUPPORTED`, `DISPUTED`, or `INCONCLUSIVE`).
+**Success:** `200 OK`, Spring Data `PagedModel<ReportFeedResponseDto>`. Each report has `reportId`, `description`, `location`, `reporter`, `distance`, `mediaList`, `status`, `validationStatus`, `category`, `createdAt`, `upvoteCount`, `downvoteCount`, and optionally `viewerVote` (`UPVOTE` or `DOWNVOTE`). For anonymous reports, `reporter.username` is a generated `anonymous-{reportId}` display name and `reporter.credibilityScore` is `null`; it does not link to an account. For non-anonymous reports, reporter details identify the public account. `status` is the report processing/publication lifecycle; `validationStatus` is the separate community assessment (`PROVISIONAL`, `SUPPORTED`, `DISPUTED`, or `INCONCLUSIVE`).
 
 ### `GET /api/v1/fixr/feed/reports/{reportId}`
 
@@ -84,6 +84,16 @@ Authentication: **not required**; optional authentication supplies viewer-specif
 **Preconditions:** `reportId` must be a UUID identifying an existing report.
 
 **Success:** `200 OK`, one `ReportFeedResponseDto` with report details and vote totals. Invalid IDs return `400`; a missing report returns `404`.
+
+### `GET /api/v1/fixr/users/{username}/reports`
+
+Authentication: **not required**. Optional bearer authentication supplies the viewer's vote on each report.
+
+Query parameters: `pageNum` (default `0`) and `pageSize` (default `20`).
+
+**Preconditions:** `username` must identify an active user. Usernames beginning with the reserved `anonymous-` prefix are display-only identities for individual anonymous reports, not accounts; requesting reports for one returns `404`.
+
+**Success:** `200 OK`, paged `ReportFeedResponseDto` items for that account's non-anonymous reports only. Anonymous reports are excluded even though their real submitter remains linked internally. Unknown users and usernames beginning with the reserved `anonymous-` prefix return `404`.
 
 ### `GET /api/v1/fixr/feed/reports/{reportId}/validation`
 
@@ -229,6 +239,7 @@ Success: `200 OK`, paged `DuplicateCandidateResponseDto` items with `reportId`, 
 
 - Successful status codes above are taken from the controller/filter implementation. Validation and security failures are handled across Spring MVC/Security; exact error JSON is not standardized in the current README/source contract.
 - Public feed reads can be used without credentials. All other routes are protected by Spring Security's `anyRequest().authenticated()` rule except the explicitly permitted signup/login and API documentation routes.
+- Public reports-by-username reads are also explicitly permitted without credentials; they never include anonymous reports.
 - Login is handled by the custom Spring Security filter at `/api/v1/fixr/user/auth/login`; form login and HTTP Basic are disabled.
 - `PATCH /api/v1/fixr/feed/report/...` uses a singular path segment, while adjacent report routes use plural `/reports/`.
 - The account/profile and report update controller methods listed above are placeholders that currently return `null`.

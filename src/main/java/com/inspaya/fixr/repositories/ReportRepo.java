@@ -26,6 +26,8 @@ public interface ReportRepo extends JpaRepository<Report, UUID> {
 
     Optional<Report> findByReportIdAndReporter(String reportId, FixrUser user);
 
+    Page<Report> findAllByReporterAndIsAnonymousFalse(FixrUser reporter, Pageable pageable);
+
     @Query(
             value = """
         SELECT r
