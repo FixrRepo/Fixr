@@ -9,9 +9,20 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.ZonedDateTime;
 
 public interface ReportVoteRepo extends JpaRepository<ReportVote, UUID> {
     Optional<ReportVote> findByReportReportIdAndUserUserId(UUID reportId, UUID userId);
+    List<ReportVote> findAllByReportReportId(UUID reportId);
+    List<ReportVote> findAllByUserUserId(UUID userId);
+    @Query("""
+            select count(distinct v.report.reportId) from ReportVote v
+            where v.user.userId = :voterId and v.report.reporter.userId = :ownerId
+              and coalesce(v.updatedAt, v.createdAt) >= :since
+            """)
+    long countDistinctReportsByVoterAndReportOwnerSince(@Param("voterId") UUID voterId,
+                                                        @Param("ownerId") UUID ownerId,
+                                                        @Param("since") ZonedDateTime since);
     List<ReportVote> findAllByUserUserIdAndReportReportIdIn(UUID userId, List<UUID> reportIds);
     long countByReport_ReportIdAndVoteType(UUID reportId, ReportVoteType voteType);
 

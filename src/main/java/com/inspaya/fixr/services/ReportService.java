@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +53,10 @@ public class ReportService {
     private final ReportCategoryRepo categoryRepo;
     private final ReportCommentRepo commentRepo;
     private final ReportVoteRepo voteRepo;
+    private final ReportVoteRevisionRepo voteRevisionRepo;
+    private final UserValidityProfileRepo validityProfileRepo;
+    private final ValidationOutboxRepo validationOutboxRepo;
+    private final VotingAbuseDetectionService abuseDetectionService;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final ReportMapper mapper;
@@ -260,20 +266,39 @@ public class ReportService {
     @Transactional
     public ReportVoteResponseDto voteOnReport(String reportId, FixrUser user, ReportVoteType voteType) {
         if (voteType == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vote type is required");
-        Report report = findReport(reportId);
-        ReportVote vote = voteRepo.findByReportReportIdAndUserUserId(
-                report.getReportId(), user.getUserId()).orElseGet(() -> new ReportVote(report, user, voteType));
+        UUID parsedReportId = parseId(reportId, "reportId");
+        Report report = repo.findForValidation(parsedReportId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
+        UserValidityProfile profile = validityProfileRepo.findById(user.getUserId())
+                .orElseGet(() -> validityProfileRepo.save(new UserValidityProfile(user)));
+        BigDecimal weight = profile.getValidityScore().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        ReportVote vote = voteRepo.findByReportReportIdAndUserUserId(report.getReportId(), user.getUserId())
+                .orElse(null);
+        if (vote == null) {
+            vote = new ReportVote(report, user, voteType, weight);
+        } else {
+            voteRevisionRepo.save(new ReportVoteRevision(vote, "UPDATED"));
+            vote.setVoteType(voteType);
+            vote.setWeightAtVote(weight);
+        }
         vote.setVoteType(voteType);
         voteRepo.saveAndFlush(vote);
+        abuseDetectionService.inspectVote(report, user, vote);
+        validationOutboxRepo.save(new ValidationOutboxEvent(report.getReportId()));
         return voteSummary(report.getReportId(), voteType);
     }
 
     @Transactional
     public void removeVote(String reportId, FixrUser user) {
         UUID reportUUID = parseId(reportId, "reportId");
-        findReport(reportUUID);
+        repo.findForValidation(reportUUID).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
         voteRepo.findByReportReportIdAndUserUserId(reportUUID, user.getUserId())
-                .ifPresent(voteRepo::delete);
+                .ifPresent(vote -> {
+                    voteRevisionRepo.save(new ReportVoteRevision(vote, "REMOVED"));
+                    voteRepo.delete(vote);
+                });
+        validationOutboxRepo.save(new ValidationOutboxEvent(reportUUID));
     }
 
     public void ensureReportOwner(String reportId, FixrUser user) {

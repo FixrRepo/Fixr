@@ -1,6 +1,7 @@
 package com.inspaya.fixr.entities;
 
 import com.inspaya.fixr.enums.ReportStatus;
+import com.inspaya.fixr.enums.ReportValidationStatus;
 import com.inspaya.fixr.dtos.CreateReportDto;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -57,6 +58,10 @@ public class Report {
 
     @Enumerated(EnumType.STRING)
     private ReportStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReportValidationStatus validationStatus = ReportValidationStatus.PROVISIONAL;
 
     @OneToMany(mappedBy = "report", orphanRemoval = true)
     private List<DuplicateReportResult> duplicateReportResults;

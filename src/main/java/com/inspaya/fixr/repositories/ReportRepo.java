@@ -10,13 +10,18 @@ import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
+import jakarta.persistence.LockModeType;
 
 public interface ReportRepo extends JpaRepository<Report, UUID> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from Report r where r.reportId = :reportId")
+    Optional<Report> findForValidation(@Param("reportId") UUID reportId);
     Page<Report> findAllByReporter(FixrUser user, Pageable request);
 
     Optional<Report> findByReportIdAndReporter(String reportId, FixrUser user);

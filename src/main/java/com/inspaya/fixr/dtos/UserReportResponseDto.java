@@ -1,6 +1,7 @@
 package com.inspaya.fixr.dtos;
 
 import com.inspaya.fixr.enums.ReportStatus;
+import com.inspaya.fixr.enums.ReportValidationStatus;
 import lombok.Data;
 
 import java.time.ZonedDateTime;
@@ -13,6 +14,7 @@ public class UserReportResponseDto {
     private String description;
     private LocationDto location;
     private ReportStatus status;
+    private ReportValidationStatus validationStatus;
     private List<MediaDto> reportMedia;
     private String category;
     private ZonedDateTime createdAt;

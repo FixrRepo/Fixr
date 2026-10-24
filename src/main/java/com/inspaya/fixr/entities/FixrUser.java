@@ -97,6 +97,7 @@ public class FixrUser {
         this.email = userDto.email();
         this.phoneNumber = userDto.phoneNumber();
         this.isActive = true;
+        this.credibilityScore = 10.0;
         this.isInNigeria = userDto.isInNigeria();
         this.agreedToTerms = userDto.agreedToTerms();
 

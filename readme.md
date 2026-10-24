@@ -75,7 +75,7 @@ Query parameters (all optional):
 
 **Preconditions:** `status` must be a valid enum name; pagination and order are passed to the feed service. The controller does not declare explicit range validation for these values.
 
-**Success:** `200 OK`, Spring Data `PagedModel<ReportFeedResponseDto>`. Each report has `reportId`, `description`, `location`, `reporter`, `distance`, `mediaList`, `status`, `category`, `createdAt`, `upvoteCount`, `downvoteCount`, and optionally `viewerVote` (`UPVOTE` or `DOWNVOTE`).
+**Success:** `200 OK`, Spring Data `PagedModel<ReportFeedResponseDto>`. Each report has `reportId`, `description`, `location`, `reporter`, `distance`, `mediaList`, `status`, `validationStatus`, `category`, `createdAt`, `upvoteCount`, `downvoteCount`, and optionally `viewerVote` (`UPVOTE` or `DOWNVOTE`). `status` is the report processing/publication lifecycle; `validationStatus` is the separate community assessment (`PROVISIONAL`, `SUPPORTED`, `DISPUTED`, or `INCONCLUSIVE`).
 
 ### `GET /api/v1/fixr/feed/reports/{reportId}`
 
@@ -84,6 +84,14 @@ Authentication: **not required**; optional authentication supplies viewer-specif
 **Preconditions:** `reportId` must be a UUID identifying an existing report.
 
 **Success:** `200 OK`, one `ReportFeedResponseDto` with report details and vote totals. Invalid IDs return `400`; a missing report returns `404`.
+
+### `GET /api/v1/fixr/feed/reports/{reportId}/validation`
+
+Authentication: **not required**.
+
+Returns the latest asynchronously computed validation snapshot: `reportId`, `validationStatus`, `eligibleVoteCount`, `upvoteWeight`, `downvoteWeight`, `weightedSupportRatio` (0–1, nullable when total weight is zero), and `provisional`. A newly cast or removed vote may not appear until background processing completes; poll this endpoint to observe the updated outcome. With fewer than five voters the result remains `PROVISIONAL`; sufficient participation uses the configured support/dispute thresholds. Score changes use leave-one-voter-out consensus, so a user's assessment is scored only when at least five other eligible votes form a qualifying result (normally at least six votes on the report).
+
+**Success:** `200 OK`, `ReportValidationResponseDto`. Invalid IDs return `400`; an unknown report returns `404`.
 
 ### `GET /api/v1/fixr/feed/reports/{reportId}/comments`
 
@@ -131,7 +139,9 @@ Request body: `{ "vote": "UPVOTE" }`, where `vote` is `UPVOTE` or `DOWNVOTE`.
 
 **Preconditions:** Existing report, valid vote enum, authenticated user. Repeating the request changes/replaces that user's vote for the report.
 
-**Success:** `200 OK`, `{ "viewerVote": "UPVOTE", "upvoteCount": 1, "downvoteCount": 0 }` (counts reflect the resulting vote state).
+**Success:** `200 OK`, `{ "viewerVote": "UPVOTE", "upvoteCount": 1, "downvoteCount": 0 }`. These are vote counts, not weighted totals. The request commits the vote and a durable background-validation event together; weighted validation and any qualifying score adjustments happen asynchronously.
+
+Each vote's weight is captured from the user's validity score when cast or changed. Changing a vote replaces the active vote and retains its prior decision and weight in revision history. Removing a vote is also recorded and triggers asynchronous recalculation.
 
 ### `DELETE /api/v1/fixr/feed/reports/{reportId}/vote`
 
@@ -148,6 +158,16 @@ All routes in this section require authentication except signup, documented abov
 ### `GET /api/v1/fixr/user`
 
 Returns the current user's `FixrUserResponseDto` (`username`, `firstname`, `middleName`, `lastname`, `email`, `blindEmailIndex`). Success: `200 OK`. No request body.
+
+### `GET /api/v1/fixr/user/validity`
+
+Authentication: **required**. Returns the current user's `validityScore` (0–100), `scoredAssessments`, and append-only `history`. Each history item includes `eventId`, `reportId`, `scoreDelta`, `scoreAfter`, `reason`, `scoringVersion`, `evaluationEligibleVoters`, `evaluationSupportRatio`, and `createdAt`. A new account starts at 10. Scores change only after asynchronous evaluation against a qualifying leave-one-voter-out consensus; insufficient or inconclusive evidence does not change the score.
+
+### `GET /api/v1/fixr/moderation/voting-abuse-flags`
+
+Authentication: **required with the `MODERATOR` authority**. Returns open `VotingAbuseFlagDto` records for suspicious same-side voting bursts, reciprocal voting patterns, and repeated votes on reports by the same reporter. These are review signals only; they do not mark votes incorrect or adjust scores. Configure moderator usernames with the comma-separated `FIXR_MODERATOR_USERNAMES` environment variable.
+
+Moderators can record a review with `PATCH /api/v1/fixr/moderation/voting-abuse-flags/{flagId}` and body `{ "outcome": "NO_ACTION", "notes": "Optional review notes" }`. `outcome` is required and must be `NO_ACTION`, `CONFIRMED_SUSPICIOUS`, or `REFERRED_FOR_FURTHER_REVIEW`. Success: `204 No Content`; a reviewed flag cannot be reviewed again through this route.
 
 ### `PATCH /api/v1/fixr/user`
 

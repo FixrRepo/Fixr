@@ -2,6 +2,7 @@ package com.inspaya.fixr.dtos;
 
 import com.inspaya.fixr.enums.ReportStatus;
 import com.inspaya.fixr.enums.ReportVoteType;
+import com.inspaya.fixr.enums.ReportValidationStatus;
 import lombok.Data;
 
 import java.time.ZonedDateTime;
@@ -20,6 +21,7 @@ public class ReportFeedResponseDto {
 
     private List<MediaDto> mediaList;
     private ReportStatus status;
+    private ReportValidationStatus validationStatus;
 
     private String category;
 

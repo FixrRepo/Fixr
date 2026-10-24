@@ -10,6 +10,8 @@ import com.inspaya.fixr.mapper.UserMapper;
 import com.inspaya.fixr.repositories.CredibilityEventRepo;
 import com.inspaya.fixr.repositories.FixrUserFollowRepo;
 import com.inspaya.fixr.repositories.FixrUserRepo;
+import com.inspaya.fixr.repositories.UserValidityProfileRepo;
+import com.inspaya.fixr.entities.UserValidityProfile;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -18,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -35,9 +38,11 @@ public class FixrUserService {
     private final FixrUserRepo fixrUserRepo;
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserValidityProfileRepo validityProfileRepo;
 
     private static final Map<String, List<String>> nameSet = loadNameSet();
 
+    @Transactional
     public FixrUserResponseDto createFixrUser(@Validated CreateFixrUserDto userDto){
 
         State state = locationService.createOrReturnState(userDto.state());
@@ -59,7 +64,10 @@ public class FixrUserService {
             username = generateUsername();
 
         user.setUsername(username);
-        return mapper.toDto(createOrReturnUser(user));
+        FixrUser savedUser = createOrReturnUser(user);
+        validityProfileRepo.findById(savedUser.getUserId())
+                .orElseGet(() -> validityProfileRepo.save(new UserValidityProfile(savedUser)));
+        return mapper.toDto(savedUser);
     }
 
     public FixrUserResponseDto getUser(String emailIndexHex){

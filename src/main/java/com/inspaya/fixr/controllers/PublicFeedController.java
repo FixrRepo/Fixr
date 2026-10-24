@@ -23,6 +23,7 @@ public class PublicFeedController {
     private final ReportRecommendationService recommendationService;
     private final ReportService reportService;
     private final ReportEmbeddingService reportEmbeddingService;
+    private final ValidationProcessingService validationProcessingService;
 
     @GetMapping
     public ResponseEntity<PagedModel<ReportFeedResponseDto>> getFeeds(
@@ -44,6 +45,15 @@ public class PublicFeedController {
             @AuthenticationPrincipal(errorOnInvalidType = false) FixrUserSecurityDetail detail) {
         return ResponseEntity.ok(reportService.getReportFeed(
                 reportId, detail == null ? null : detail.getUser()));
+    }
+
+    @GetMapping("/reports/{reportId}/validation")
+    public ResponseEntity<ReportValidationResponseDto> getReportValidation(@PathVariable String reportId) {
+        try {
+            return ResponseEntity.ok(validationProcessingService.getReportValidation(java.util.UUID.fromString(reportId)));
+        } catch (IllegalArgumentException exception) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid reportId");
+        }
     }
 
     @PostMapping("/reports/{reportId}/comments")

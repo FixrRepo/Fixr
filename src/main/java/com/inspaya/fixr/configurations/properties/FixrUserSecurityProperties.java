@@ -12,7 +12,8 @@ public record FixrUserSecurityProperties(
         long accessTokenExpirationMinutes,
         long refreshTokenExpirationDays,
         String domain,
-        List<String> allowedOrigins
+        List<String> allowedOrigins,
+        String moderatorUsernames
 ) {
 
 }

@@ -22,6 +22,7 @@ public class FixrUserController {
     private final ReportService reportService;
     private final ReportEmbeddingService reportEmbeddingService;
     private final FixrUserService service;
+    private final UserValidityService userValidityService;
 
     @PostMapping("/auth/signup")
     public ResponseEntity<FixrUserResponseDto> createAccount(@Valid @RequestBody CreateFixrUserDto userDto){
@@ -31,6 +32,13 @@ public class FixrUserController {
     @GetMapping
     public ResponseEntity<FixrUserResponseDto> getFixrUser(@AuthenticationPrincipal FixrUserSecurityDetail detail){
         return ResponseEntity.ok(service.mapUser(detail.getUser()));
+    }
+
+    @GetMapping("/validity")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserValidityResponseDto> getCurrentUserValidity(
+            @AuthenticationPrincipal FixrUserSecurityDetail detail) {
+        return ResponseEntity.ok(userValidityService.getCurrentUserValidity(detail.getUser()));
     }
 
     @PatchMapping
