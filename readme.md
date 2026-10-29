@@ -58,6 +58,16 @@ Although the DTO property is named `username`, authentication derives the lookup
 
 ## Public report feed
 
+### `GET /api/v1/fixr/leaderboard`
+
+Authentication: **not required**. Returns leaderboard entries ranked by the account's current validity score, from highest to lowest.
+
+Query parameters: `stateId` and `lgaId` (optional numeric IDs; filter by the state and/or LGA associated with the user's account), `pageNum` (default `0`), and `pageSize` (default `20`, maximum `100`). If both region filters are supplied, the LGA must belong to the selected state.
+
+**Success:** `200 OK`, paged `LeaderboardEntryDto` items containing `rank`, generated public `username`, `credibilityScore`, `reportCount`, `supportedReportCount` (active upvotes), `disputedReportCount` (active downvotes), and `scoredAssessments`. The report count excludes soft-deleted reports and includes anonymous reports, but does not identify which reports are anonymous. Vote counts reflect the user's current vote per report; changing/removing a vote updates the corresponding counts. Redis is an eventually consistent projection of committed database records; new activity is queued immediately and usually appears after the next background poll. Existing accounts are queued at startup and hourly for cache rebuild/reconciliation, which may take longer for larger account sets.
+
+Invalid pagination or a state/LGA mismatch returns `400`; unknown state or LGA IDs return `404`.
+
 ### `GET /api/v1/fixr/feed`
 
 Authentication: **not required**. Optional bearer authentication enables the `viewerVote` field.
@@ -238,8 +248,8 @@ Success: `200 OK`, paged `DuplicateCandidateResponseDto` items with `reportId`, 
 ## Response and error notes
 
 - Successful status codes above are taken from the controller/filter implementation. Validation and security failures are handled across Spring MVC/Security; exact error JSON is not standardized in the current README/source contract.
-- Public feed reads can be used without credentials. All other routes are protected by Spring Security's `anyRequest().authenticated()` rule except the explicitly permitted signup/login and API documentation routes.
-- Public reports-by-username reads are also explicitly permitted without credentials; they never include anonymous reports.
+- Public feed, leaderboard, and reports-by-username GET routes can be used without credentials. Other routes are protected by Spring Security's `anyRequest().authenticated()` rule except the explicitly permitted signup/login and API documentation routes.
+- Public reports-by-username reads never include anonymous reports. The leaderboard includes the user's total report count, including anonymous reports, without identifying which reports are anonymous.
 - Login is handled by the custom Spring Security filter at `/api/v1/fixr/user/auth/login`; form login and HTTP Basic are disabled.
 - `PATCH /api/v1/fixr/feed/report/...` uses a singular path segment, while adjacent report routes use plural `/reports/`.
 - The account/profile and report update controller methods listed above are placeholders that currently return `null`.

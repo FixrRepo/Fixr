@@ -26,6 +26,8 @@ public interface ReportVoteRepo extends JpaRepository<ReportVote, UUID> {
     List<ReportVote> findAllByUserUserIdAndReportReportIdIn(UUID userId, List<UUID> reportIds);
     long countByReport_ReportIdAndVoteType(UUID reportId, ReportVoteType voteType);
 
+    long countByUserUserIdAndVoteType(UUID userId, ReportVoteType voteType);
+
     @Query("""
             select v.report.reportId as reportId, v.voteType as voteType, count(v) as voteCount
             from ReportVote v where v.report.reportId in :reportIds

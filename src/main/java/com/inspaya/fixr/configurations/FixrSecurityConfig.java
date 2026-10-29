@@ -65,6 +65,7 @@ public class FixrSecurityConfig {
                     request.requestMatchers(HttpMethod.POST,"/api/v1/fixr/user/auth/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/api/v1/fixr/feed/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/api/v1/fixr/users/*/reports").permitAll();
+                    request.requestMatchers(HttpMethod.GET, "/api/v1/fixr/leaderboard").permitAll();
                     request.requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll();
                     request.anyRequest().authenticated();
                 })

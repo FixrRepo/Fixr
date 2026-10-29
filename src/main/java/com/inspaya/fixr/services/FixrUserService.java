@@ -39,6 +39,7 @@ public class FixrUserService {
     private final UserMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final UserValidityProfileRepo validityProfileRepo;
+    private final LeaderboardProjectionService leaderboardProjectionService;
 
     private static final Map<String, List<String>> nameSet = loadNameSet();
 
@@ -67,6 +68,7 @@ public class FixrUserService {
         FixrUser savedUser = createOrReturnUser(user);
         validityProfileRepo.findById(savedUser.getUserId())
                 .orElseGet(() -> validityProfileRepo.save(new UserValidityProfile(savedUser)));
+        leaderboardProjectionService.enqueue(savedUser.getUserId());
         return mapper.toDto(savedUser);
     }
 

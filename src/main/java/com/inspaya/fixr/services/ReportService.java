@@ -51,6 +51,7 @@ public class ReportService {
     private final VideoEmbeddingRepo videoEmbeddingRepo;
     private final ReportRepo repo;
     private final FixrUserRepo fixrUserRepo;
+    private final LeaderboardProjectionService leaderboardProjectionService;
     private final ReportCategoryRepo categoryRepo;
     private final ReportCommentRepo commentRepo;
     private final ReportVoteRepo voteRepo;
@@ -90,6 +91,7 @@ public class ReportService {
                     );
             report.setIdempotencyKey(reportDto.idempotencyKey());
             var savedReport = repo.findByIdempotencyKey(reportDto.idempotencyKey()).orElseGet(()->repo.save(report));
+            leaderboardProjectionService.enqueue(savedReport.getReporter().getUserId());
             rabbitTemplate.convertAndSend(properties.fixrExchangeName(), properties.requestQueueRk(), task);
             return mapper.convertToUserReportResponse(savedReport);
         } catch (AmqpException e) {
@@ -167,11 +169,13 @@ public class ReportService {
     }
 
 
+    @Transactional
     public void deleteReport(String reportId, FixrUser user) {
         Report report = repo.findById(UUID.fromString(reportId)).orElseThrow();
-        if(report.getReporter().getUserId() == user.getUserId()) {
+        if(report.getReporter().getUserId().equals(user.getUserId())) {
             report.setStatus(ReportStatus.Deleted);
             repo.save(report);
+            leaderboardProjectionService.enqueue(user.getUserId());
         }
         else throw new IllegalOperationException("Action is not allowed");
     }
@@ -296,6 +300,7 @@ public class ReportService {
         }
         vote.setVoteType(voteType);
         voteRepo.saveAndFlush(vote);
+        leaderboardProjectionService.enqueue(user.getUserId());
         abuseDetectionService.inspectVote(report, user, vote);
         validationOutboxRepo.save(new ValidationOutboxEvent(report.getReportId()));
         return voteSummary(report.getReportId(), voteType);
@@ -310,6 +315,7 @@ public class ReportService {
                 .ifPresent(vote -> {
                     voteRevisionRepo.save(new ReportVoteRevision(vote, "REMOVED"));
                     voteRepo.delete(vote);
+                    leaderboardProjectionService.enqueue(user.getUserId());
                 });
         validationOutboxRepo.save(new ValidationOutboxEvent(reportUUID));
     }

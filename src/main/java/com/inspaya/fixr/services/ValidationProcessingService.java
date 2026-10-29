@@ -34,6 +34,7 @@ public class ValidationProcessingService {
     private final ValidationSnapshotRepo snapshotRepo;
     private final ValidityScoreEventRepo scoreEventRepo;
     private final ValidationPolicyProperties policy;
+    private final LeaderboardProjectionService leaderboardProjectionService;
 
     @Transactional
     public void processOne() {
@@ -122,6 +123,7 @@ public class ValidationProcessingService {
                     actualDelta, after, agrees ? ValidityScoreReason.CONSENSUS_AGREEMENT
                     : ValidityScoreReason.CONSENSUS_DISAGREEMENT, policy.scoringVersion(),
                     (int) otherVoters, independentRatio));
+            leaderboardProjectionService.enqueue(assessedVote.getUser().getUserId());
         }
     }
 
