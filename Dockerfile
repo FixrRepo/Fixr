@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 \
 
 # Copy source
 COPY src src
-
+COPY username-template.csv .
 # Build application
 RUN --mount=type=cache,target=/root/.m2 \
     ./mvnw clean package -DskipTests && \
