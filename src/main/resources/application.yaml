@@ -42,11 +42,11 @@ spring:
 
 fixr:
   security:
-    profile: Dev
-    secretKey: 01a123b7-d2cf-7541-8772-74db437ce14d
-    accessTokenExpirationMinutes: 30
-    refreshTokenExpirationDays: 7
-    domain: localhost
+    profile: ${APP_PROFILE}
+    secretKey: ${SECURITY_KEY}
+    accessTokenExpirationMinutes: ${ACCESS_TOKEN_EXPIRATION_MINUTES}
+    refreshTokenExpirationDays: ${REFRESH_TOKEN_EXPIRATION_DAYS}
+    domain: ${FIXR_DOMAIN}
     allowedOrigins: ${ALLOWED_ORIGINS}
     moderatorUsernames: ${FIXR_MODERATOR_USERNAMES:}
   rabbit-mq:
