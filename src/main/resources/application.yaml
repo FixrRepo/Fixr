@@ -1,16 +1,16 @@
 spring:
   jpa:
-    show-sql: true
+    show-sql: ${SHOW_SQL:false}
     hibernate:
-      ddl-auto: create
-      format_sql: true
+      ddl-auto: ${DDL_AUTO:update}
+      format_sql: ${FORMAT_SQL:true}
   application:
     name: fixr
   ai:
     model:
       embedding: none
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:true}
 
   datasource:
     url: ${POSTGRES_URL}
