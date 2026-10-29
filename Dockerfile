@@ -36,7 +36,8 @@ RUN useradd --system --create-home --uid 10001 appuser
 USER appuser
 
 COPY --from=build /app/target/app.jar app.jar
-
+COPY --from=build --chown=appuser:appuser \
+    /app/username-template.csv /app/username-template.csv
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
