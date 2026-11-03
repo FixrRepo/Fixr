@@ -1,5 +1,9 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.report;
 
+import com.inspaya.fixr.entities.location.City;
+import com.inspaya.fixr.entities.FixrUser;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
 import com.inspaya.fixr.enums.ReportStatus;
 import com.inspaya.fixr.enums.ReportValidationStatus;
 import com.inspaya.fixr.dtos.CreateReportDto;
@@ -12,9 +16,7 @@ import org.locationtech.jts.geom.Point;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @NoArgsConstructor
@@ -25,9 +27,13 @@ public class Report {
     @Id
     private UUID reportId;
 
+    @Column(nullable = false)
+    private String title;
+    @Column(nullable = false)
     private String description;
 
     // Having to options to opt out of anonymity permanently compromises user's identity
+    @Column(nullable = false)
     private Boolean isAnonymous;
 
     @Column(nullable = false, columnDefinition = "geometry(Point, 4326)")
@@ -36,6 +42,9 @@ public class Report {
     @ManyToOne
     @JoinColumn(nullable = false, name = "reporter_id")
     private FixrUser reporter;
+
+    @OneToMany(mappedBy = "report", cascade = {CascadeType.ALL})
+    private Set<ReportFollow> reportFollowers = new HashSet<>();
 
     private Double credibilityScore;
 
@@ -64,7 +73,7 @@ public class Report {
     private ReportValidationStatus validationStatus = ReportValidationStatus.PROVISIONAL;
 
     @OneToMany(mappedBy = "report", orphanRemoval = true)
-    private List<DuplicateReportResult> duplicateReportResults;
+    private List<DuplicateReportResult> duplicateReportResults = new ArrayList<>();
 
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReportComment> comments = new ArrayList<>();
@@ -92,6 +101,7 @@ public class Report {
 
     public Report(CreateReportDto reportDto, UUID reportId, FixrUser reporter){
         this.reportId = reportId;
+        title = reportDto.title();
         description = reportDto.description();
         this.reporter = reporter;
         isAnonymous = reportDto.isAnonymous() == null || reportDto.isAnonymous();
@@ -99,6 +109,10 @@ public class Report {
         reportMedia = reportDto.mediaList().stream()
                 .map((media->new ReportMedia(media, this))).toList();
         reportEmbedding = new ReportEmbedding(reportId, coordinate);
+    }
+
+    public void addFollower(FixrUser follower){
+        this.reportFollowers.add(new ReportFollow(follower, this));
     }
 
 }

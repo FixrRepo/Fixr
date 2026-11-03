@@ -1,11 +1,12 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.Report;
-import com.inspaya.fixr.entities.ReportCategory;
+import com.inspaya.fixr.entities.report.Report;
+import com.inspaya.fixr.entities.report.ReportCategory;
 import com.inspaya.fixr.entities.FixrUser;
-import com.inspaya.fixr.entities.State;
+import com.inspaya.fixr.entities.location.State;
 import com.inspaya.fixr.enums.ReportStatus;
 import jakarta.validation.constraints.NotBlank;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +46,11 @@ public interface ReportRepo extends JpaRepository<Report, UUID> {
             @Param("point") Point point,
             Pageable pageable
     );
+
+    @Query("""
+            SELECT r FROM Report r WHERE within(r.coordinate, :bbox) = true
+            """)
+    Page<Report> findReportsWithinBox(@Param("bbox") Geometry bbox, Pageable pageable);
 
     @Query(
             value = """

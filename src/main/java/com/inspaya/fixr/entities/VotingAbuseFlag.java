@@ -1,5 +1,6 @@
 package com.inspaya.fixr.entities;
 
+import com.inspaya.fixr.entities.report.Report;
 import com.inspaya.fixr.enums.VotingAbusePattern;
 import com.inspaya.fixr.enums.AbuseReviewOutcome;
 import jakarta.persistence.*;

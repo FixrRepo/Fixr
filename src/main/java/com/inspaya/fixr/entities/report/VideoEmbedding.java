@@ -1,4 +1,4 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.report;
 
 import jakarta.persistence.*;
 import lombok.Getter;

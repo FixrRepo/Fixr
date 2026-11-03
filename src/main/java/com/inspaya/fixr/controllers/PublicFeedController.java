@@ -8,7 +8,9 @@ import com.inspaya.fixr.services.ReportRecommendationService;
 import com.inspaya.fixr.services.ReportService;
 import com.inspaya.fixr.services.ValidationProcessingService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,29 @@ public class PublicFeedController {
         FeedSpecifications specification = new FeedSpecifications(
                 category, status, state, detail, pageNumber, pageSize, order);
         return ResponseEntity.ok(recommendationService.getRecommendation(specification));
+    }
+
+    @PutMapping("/reports/{reportId}/follow")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> followReport(@PathVariable String reportId, @AuthenticationPrincipal FixrUserSecurityDetail detail){
+        reportService.followReport(reportId, detail.getUser());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/reports/{reportId}/unfollow")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> unFollowReport(@PathVariable String reportId, @AuthenticationPrincipal FixrUserSecurityDetail detail){
+        reportService.unFollowReport(reportId, detail.getUser());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/map")
+    public ResponseEntity<PagedModel<ReportFeedResponseDto>> getMapFeeds(@NotBlank @RequestParam("bbox") String bbox, @RequestParam("group") String group,
+                                                                         @RequestParam("status") ReportStatus status,
+                                                                         @RequestParam(value = "pageNum", defaultValue = "0") int pageNum,
+                                                                         @RequestParam(value = "pageSize", defaultValue = "40") int pageSize){
+        PageRequest pageRequest = PageRequest.of(pageNum, pageSize);
+        return ResponseEntity.ok(reportService.getReportFeedByBbox(bbox, group, pageRequest));
     }
 
     @GetMapping("/reports/{reportId}")

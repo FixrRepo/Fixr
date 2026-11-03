@@ -1,4 +1,4 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.report;
 
 import com.inspaya.fixr.enums.MediaType;
 import com.inspaya.fixr.dtos.MediaDto;

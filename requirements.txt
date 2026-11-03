@@ -1,0 +1,62 @@
+1. New endpoints
+Map
+Method	Path	Purpose
+GET	/api/v1/fixr/feed/map?bbox=west,south,east,north&group=state|lga&category=&status=	Reports inside the map rectangle. Returns { pins: [{ id, lat, lng, status, category, title }], groups: [{ level, stateCode, stateName, lga, lat, lng, count }], truncated }. group returns totals per state or LGA instead of pins.
+
+Media (Cloudinary)
+Method	Path	Purpose
+POST	/api/v1/fixr/user/media/uploads	Get a signed upload ticket for one photo or video: { purpose, kind, mimeType, sizeBytes, sha256, capturedAt } → { uploadId, uploadUrl, fields, expiresAt }.
+
+Auth
+Method	Path	Purpose
+POST	/api/v1/fixr/user/auth/refresh	New access token when the 30-minute one expires
+POST	/api/v1/fixr/user/auth/logout	End the session
+POST	/api/v1/fixr/user/auth/phone/code	Send an EMAIL verification code: { phone }
+POST	/api/v1/fixr/user/auth/phone/verify	Check the code: { phone, code }
+POST	/api/v1/fixr/user/auth/password/forgot	Email a reset code: { email }
+POST	/api/v1/fixr/user/auth/password/verify	Check the code: { email, code } → { resetToken }
+POST	/api/v1/fixr/user/auth/password/reset	Set a new password: { resetToken, password }
+
+Notifications
+Method	Path	Purpose
+GET	/api/v1/fixr/user/notifications?pageNum=&pageSize=	List notifications: { id, kind, title, body, createdAt, read, reportId }
+GET	/api/v1/fixr/user/notifications/unread-count	The number shown on the bell
+POST	/api/v1/fixr/user/notifications/read	Mark some or all as read: { ids: [...] } or { all: true }
+
+Follow
+Method	Path	Purpose
+PUT	/api/v1/fixr/feed/reports/{id}/follow   Follow a report
+DELETE	/api/v1/fixr/feed/reports/{id}/follow	Unfollow
+
+Resolution (marking an issue fixed)
+Method	Path	Purpose
+POST	/api/v1/fixr/feed/reports/{id}/resolution	Propose "it's fixed", with a note and evidence uploadIds
+POST	/api/v1/fixr/feed/reports/{id}/resolution/confirm	Confirm the fix
+POST	/api/v1/fixr/feed/reports/{id}/resolution/dispute	Dispute the fix, with a note and evidence uploadIds
+
+Wins and leaderboard
+Method	Path	Purpose
+GET	/api/v1/fixr/feed/wins?state=&pageNum=&pageSize=	Resolved reports: before/after images, voices, verified, agency
+GET	/api/v1/fixr/feed/leaderboard?scope=all|community|state	{ improvedAreas (LGAs), improvedStates, advocates }
+
+Account
+Method	Path	Purpose
+GET	/api/v1/fixr/user/stats	Profile numbers: reports, voices rallied, member since
+GET / PUT	/api/v1/fixr/user/preferences/notifications	{ push, email, liked, status, acknowledged }
+GET / PUT	/api/v1/fixr/user/preferences/privacy	{ leaderboardOptIn }
+
+Search and moderation
+Method	Path	Purpose
+GET	/api/v1/fixr/feed/search?q=&pageNum=&pageSize=	Text search over reports
+
+2. Changes to existing endpoints
+Endpoint	What we need
+POST /fixr/user/auth/signup	phoneNumber in international format, up to 16 characters (+447911123456). Today's 11–13 character limit rejects many numbers from abroad
+POST /fixr/user/auth/login	Accept an email or phone number in username, as well as the username
+POST /fixr/user/reports	title (5–80 characters); mediaList: [{ uploadId }] instead of URLs; locationDto adds landmark, accuracyM, source (photo_gps | device_gps | manual_pin) and plusCode
+GET /fixr/feed, /feed/reports/{id}, /fixr/user/reports	Return title; a civic status (reported, acknowledged, in_progress, resolved, verified, disputed) as well as the processing status; media as URLs for display (a thumbnail and a full size); viewer.following; resolution info on detail
+GET /fixr/feed	Accept lat and lng for "near me" sorting
+GET …/duplicate-candidates	Callable before a report exists: ?lat=&lng=&category=
+PATCH /feed/report/{id}/comments/…	Use the plural /feed/reports/ path, like the other comment endpoints
+PATCH /fixr/user and DELETE /fixr/user	Implement them (they return null today)
+State and LGA names	Use the same names as our list of 37 states and 774 LGAs (we'll send it as JSON)

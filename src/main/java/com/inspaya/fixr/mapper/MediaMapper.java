@@ -1,7 +1,7 @@
 package com.inspaya.fixr.mapper;
 
 import com.inspaya.fixr.dtos.MediaDto;
-import com.inspaya.fixr.entities.ReportMedia;
+import com.inspaya.fixr.entities.report.ReportMedia;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

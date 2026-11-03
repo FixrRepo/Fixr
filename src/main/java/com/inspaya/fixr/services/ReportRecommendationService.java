@@ -1,31 +1,25 @@
 package com.inspaya.fixr.services;
 
-import com.inspaya.fixr.controllers.PublicFeedController;
 import com.inspaya.fixr.dtos.FeedSpecifications;
 import com.inspaya.fixr.dtos.ReportFeedResponseDto;
-import com.inspaya.fixr.entities.Report;
-import com.inspaya.fixr.entities.ReportCategory;
-import com.inspaya.fixr.entities.State;
+import com.inspaya.fixr.entities.report.Report;
+import com.inspaya.fixr.entities.report.ReportCategory;
+import com.inspaya.fixr.entities.location.State;
 import com.inspaya.fixr.enums.ReportStatus;
 import com.inspaya.fixr.mapper.ReportMapper;
 import com.inspaya.fixr.repositories.ReportCategoryRepo;
 import com.inspaya.fixr.repositories.ReportRepo;
-import com.inspaya.fixr.security.details.FixrUserSecurityDetail;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.locationtech.jts.operation.overlay.PointBuilder;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PagedModel;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Objects;

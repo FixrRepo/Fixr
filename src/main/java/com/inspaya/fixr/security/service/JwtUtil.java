@@ -37,7 +37,7 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(properties.secretKey().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(FixrUserSecurityDetail userSecurityDetail, UUID jti, TokenType tokenType) {
+    public String generateToken(FixrUserSecurityDetail userSecurityDetail, UUID jti, TokenType tokenType, UUID session) {
         List<String> authorities = userSecurityDetail.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
         Duration duration = tokenType==TokenType.AccessToken? Duration.ofMinutes(properties.accessTokenExpirationMinutes()):
                 Duration.ofDays(properties.refreshTokenExpirationDays());
@@ -48,6 +48,7 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + duration.toMillis()))
                 .issuer("Fixr")
                 .claim("authorities", authorities)
+                .claim("session", session.toString())
                 .compact();
     }
 
@@ -65,6 +66,14 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload()
                 .get("authorities", StringList.class);
+    }
+
+    public UUID extractSession(String token){
+        return UUID.fromString(Jwts.parser().verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("session", String.class));
     }
 
     public UUID extractJti(String token){

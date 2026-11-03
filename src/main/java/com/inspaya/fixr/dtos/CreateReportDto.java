@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.Length;
 import java.util.List;
 
 public record CreateReportDto(
+        String title,
         String description,
         @NotBlank(message = "Report category must be specified") String category,
         Boolean isAnonymous,

@@ -2,6 +2,10 @@ package com.inspaya.fixr.services;
 
 import com.inspaya.fixr.dtos.*;
 import com.inspaya.fixr.entities.*;
+import com.inspaya.fixr.entities.location.City;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
+import com.inspaya.fixr.entities.report.*;
 import com.inspaya.fixr.enums.ReportVoteType;
 import com.inspaya.fixr.enums.EmbeddingTaskEvents;
 import com.inspaya.fixr.enums.MediaType;
@@ -14,31 +18,21 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jts.geom.*;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.data.domain.*;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -46,9 +40,6 @@ import java.math.RoundingMode;
 @RequiredArgsConstructor
 @Slf4j
 public class ReportService {
-    private final ReportEmbeddingRepo reportEmbeddingRepo;
-    private final ReportMediaRepo mediaRepo;
-    private final VideoEmbeddingRepo videoEmbeddingRepo;
     private final ReportRepo repo;
     private final FixrUserRepo fixrUserRepo;
     private final LeaderboardProjectionService leaderboardProjectionService;
@@ -59,7 +50,7 @@ public class ReportService {
     private final UserValidityProfileRepo validityProfileRepo;
     private final ValidationOutboxRepo validationOutboxRepo;
     private final VotingAbuseDetectionService abuseDetectionService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final ReportFollowRepo reportFollowRepo;
 
     private final ReportMapper mapper;
 
@@ -90,6 +81,8 @@ public class ReportService {
                     report.getDescription()
                     );
             report.setIdempotencyKey(reportDto.idempotencyKey());
+            // Owner follows report
+            report.addFollower(reporter);
             var savedReport = repo.findByIdempotencyKey(reportDto.idempotencyKey()).orElseGet(()->repo.save(report));
             leaderboardProjectionService.enqueue(savedReport.getReporter().getUserId());
             rabbitTemplate.convertAndSend(properties.fixrExchangeName(), properties.requestQueueRk(), task);
@@ -136,6 +129,29 @@ public class ReportService {
         List<ReportFeedResponseDto> responses = mapper.convertToReportFeedResponses(reports.getContent());
         populateVoteSummary(reports.getContent(), responses, viewer);
         return new PagedModel<>(new PageImpl<>(responses, reports.getPageable(), reports.getTotalElements()));
+    }
+
+    public @Nullable PagedModel<ReportFeedResponseDto> getReportFeedByBbox(String bbox, String group, PageRequest pageable) {
+        if(bbox == null || bbox.isEmpty())
+            return null;
+
+        if(group.toLowerCase() != "state" || group.toLowerCase() !="lga")
+            group = "state";
+
+        final List<Double> boxCoordinates = Arrays.stream(bbox.split(",")).map(Double::parseDouble).toList();
+
+        if(boxCoordinates.size() < 4)
+            throw new IllegalArgumentException("Bounding box contains too fee values");
+        GeometryFactory geometryFactory = new GeometryFactory();
+        Envelope envelope = new Envelope(boxCoordinates.getFirst(), boxCoordinates.get(1),
+                boxCoordinates.get(2), boxCoordinates.getLast());
+        Geometry box = geometryFactory.toGeometry(envelope);
+        pageable = pageable.withSort(Sort.by(group));
+
+        Page<Report> reports = repo.findReportsWithinBox(box, pageable);
+
+        List<ReportFeedResponseDto> responseFeed = mapper.convertToReportFeedResponses(reports.getContent());
+        return new PagedModel<>(new PageImpl<>(responseFeed, reports.getPageable(), reports.getTotalElements()));
     }
 
     public @Nullable UserReportResponseDto getUserSubmittedReport(String reportId, FixrUser user) {
@@ -327,6 +343,21 @@ public class ReportService {
         }
     }
 
+    // Report following
+    public void followReport(String reportId, FixrUser fixrUser){
+        Report report = repo.findById(UUID.fromString(reportId)).orElseThrow(()-> new EntityNotFoundException("Invalid reportId "+reportId));
+        ReportFollow reportFollowOptional = reportFollowRepo.findByReportAndFollower(report, fixrUser).orElseGet(()->{
+            ReportFollow reportFollow = new ReportFollow(fixrUser, report);
+            return reportFollowRepo.save(reportFollow);
+        });
+    }
+
+    public void unFollowReport(String reportId, FixrUser fixrUser){
+        Report report = repo.findById(UUID.fromString(reportId)).orElseThrow(()-> new EntityNotFoundException("Invalid reportId "+reportId));
+        reportFollowRepo.deleteByReportAndFollower(report, fixrUser);
+    }
+
+
     private ReportVoteResponseDto voteSummary(UUID reportId, ReportVoteType viewerVote) {
         return new ReportVoteResponseDto(
                 viewerVote,
@@ -364,4 +395,5 @@ public class ReportService {
                 comment.getCommentId(), comment.getContent(), comment.getAuthor().getUsername(),
                 comment.getCreatedAt(), comment.getUpdatedAt());
     }
+
 }

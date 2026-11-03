@@ -1,6 +1,6 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.ReportCategory;
+import com.inspaya.fixr.entities.report.ReportCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

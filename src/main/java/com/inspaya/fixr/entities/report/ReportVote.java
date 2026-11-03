@@ -1,5 +1,6 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.report;
 
+import com.inspaya.fixr.entities.FixrUser;
 import com.inspaya.fixr.enums.ReportVoteType;
 import jakarta.persistence.*;
 import lombok.Getter;

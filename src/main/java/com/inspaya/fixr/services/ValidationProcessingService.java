@@ -1,6 +1,8 @@
 package com.inspaya.fixr.services;
 
 import com.inspaya.fixr.dtos.ReportValidationResponseDto;
+import com.inspaya.fixr.entities.report.Report;
+import com.inspaya.fixr.entities.report.ReportVote;
 import com.inspaya.fixr.exceptions.ValidationProcessingException;
 import com.inspaya.fixr.entities.*;
 import com.inspaya.fixr.enums.ReportValidationStatus;

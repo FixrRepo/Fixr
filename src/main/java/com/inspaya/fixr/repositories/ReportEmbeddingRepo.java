@@ -1,6 +1,6 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.ReportEmbedding;
+import com.inspaya.fixr.entities.report.ReportEmbedding;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

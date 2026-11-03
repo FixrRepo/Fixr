@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.inspaya.fixr.encryption.BlindIndexService;
 import com.inspaya.fixr.converter.DataEncryptionConverter;
 import com.inspaya.fixr.dtos.CreateFixrUserDto;
+import com.inspaya.fixr.entities.location.City;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
+import com.inspaya.fixr.entities.report.ReportFollow;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -47,6 +51,8 @@ public class FixrUser {
     @JdbcTypeCode(SqlTypes.BINARY)
     private String email;
 
+    private Boolean emailVerified;
+
     @Column(unique = true, nullable = false)
     private String blindEmailIndex;
 
@@ -56,6 +62,8 @@ public class FixrUser {
 
     @Convert(converter = DataEncryptionConverter.class)
     private String phoneNumber;
+
+    private Boolean phoneVerified;
 
     @Column(name = "user_location", columnDefinition = "geometry(Point, 4326)")
     private Point location;
@@ -76,6 +84,9 @@ public class FixrUser {
     @ManyToOne
     @JsonIgnore
     private City city;
+
+    @OneToMany(mappedBy = "follower")
+    private List<ReportFollow> followedReports;
 
     @OneToMany(mappedBy = "userFollow")
     private List<FixrUserFollow> following;

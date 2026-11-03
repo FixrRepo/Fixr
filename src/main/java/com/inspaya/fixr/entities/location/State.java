@@ -1,4 +1,4 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.location;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,20 +13,16 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(uniqueConstraints = @UniqueConstraint(name = "unq_name_state", columnNames = {"name", "state"}))
-public class Lga {
+public class State {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long lgaId;
+    private Long stateId;
 
+    @Column(unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "lga", fetch = FetchType.LAZY)
-    private List<City> lgaAreas;
-
-    @ManyToOne
-    @JoinColumn(name = "state", nullable = false)
-    private State state;
+    @OneToMany(mappedBy = "state", fetch = FetchType.LAZY)
+    private List<Lga> stateLga;
 
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
@@ -40,9 +36,7 @@ public class Lga {
         this.createdAt =ZonedDateTime.now(ZoneId.of("Africa/Lagos"));
     }
 
-    public Lga(String name, State state){
+    public State(String name){
         this.name = name;
-        this.state = state;
     }
 }
-

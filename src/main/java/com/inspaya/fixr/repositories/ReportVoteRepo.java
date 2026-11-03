@@ -1,6 +1,6 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.ReportVote;
+import com.inspaya.fixr.entities.report.ReportVote;
 import com.inspaya.fixr.enums.ReportVoteType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

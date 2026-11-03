@@ -3,9 +3,9 @@ package com.inspaya.fixr.services;
 
 import com.inspaya.fixr.dtos.AddressInfo;
 import com.inspaya.fixr.dtos.LocationDto;
-import com.inspaya.fixr.entities.City;
-import com.inspaya.fixr.entities.Lga;
-import com.inspaya.fixr.entities.State;
+import com.inspaya.fixr.entities.location.City;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
 import com.inspaya.fixr.repositories.CityRepo;
 import com.inspaya.fixr.repositories.LgaRepo;
 import com.inspaya.fixr.repositories.StateRepo;

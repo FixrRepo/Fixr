@@ -1,8 +1,8 @@
 package com.inspaya.fixr.services;
 
 import com.inspaya.fixr.dtos.LeaderboardEntryDto;
-import com.inspaya.fixr.entities.Lga;
-import com.inspaya.fixr.entities.State;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
 import com.inspaya.fixr.repositories.LgaRepo;
 import com.inspaya.fixr.repositories.StateRepo;
 import lombok.RequiredArgsConstructor;

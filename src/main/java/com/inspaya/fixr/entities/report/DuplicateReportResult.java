@@ -1,10 +1,9 @@
-package com.inspaya.fixr.entities;
+package com.inspaya.fixr.entities.report;
 
 import com.inspaya.fixr.dtos.EmbeddingCandidate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

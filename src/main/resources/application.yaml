@@ -41,6 +41,9 @@ spring:
           max-interval: ${RETRY_MAX_INTERVAL:10000}
 
 fixr:
+  email:
+    resend:
+      apiKey: ${RESEND_API_KEY}
   security:
     profile: ${APP_PROFILE}
     secretKey: ${SECURITY_KEY}
@@ -49,6 +52,7 @@ fixr:
     domain: ${FIXR_DOMAIN}
     allowedOrigins: ${ALLOWED_ORIGINS}
     moderatorUsernames: ${FIXR_MODERATOR_USERNAMES:}
+    tokenLenght: ${FIXR_OTP_TOKEN_LENGHT:6}
   rabbit-mq:
     fixr-exchange-name: ${FIXR_RABBITMQ_EXCHANGE:fixr.exchange}
     request-queue: ${FIXR_RABBITMQ_REQUEST_QUEUE:embedding.request}
@@ -78,3 +82,9 @@ fixr:
     repeated-target-window-days: ${FIXR_VALIDATION_REPEATED_TARGET_WINDOW_DAYS:30}
     reciprocal-reports-per-direction: ${FIXR_VALIDATION_RECIPROCAL_REPORTS_PER_DIRECTION:2}
     reciprocal-window-days: ${FIXR_VALIDATION_RECIPROCAL_WINDOW_DAYS:90}
+
+  cloudinary:
+    apiKey: ${CLOUDINARY_API_KEY}
+    apiSecret: ${CLOUDINARY_API_SECRET}
+    cloudName: ${CLOUDINARY_CLOUD_NAME}
+    folderName: ${CLOUDINARY_FOLDER_NAME}

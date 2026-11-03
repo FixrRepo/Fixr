@@ -5,7 +5,7 @@ import com.inspaya.fixr.dtos.LocationDto;
 import com.inspaya.fixr.dtos.MinimalFixrUserDetails;
 import com.inspaya.fixr.dtos.ReportFeedResponseDto;
 import com.inspaya.fixr.dtos.UserReportResponseDto;
-import com.inspaya.fixr.entities.Report;
+import com.inspaya.fixr.entities.report.Report;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

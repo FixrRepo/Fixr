@@ -1,6 +1,6 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.ReportComment;
+import com.inspaya.fixr.entities.report.ReportComment;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

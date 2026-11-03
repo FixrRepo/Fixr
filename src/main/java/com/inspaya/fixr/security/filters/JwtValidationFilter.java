@@ -17,9 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -29,56 +27,78 @@ public class JwtValidationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getServletPath().contains("/auth") || request.getServletPath().contains("swagger-ui") || request.getServletPath().contains("/v3/api-docs");
+        String path = request.getServletPath();
+        return path.contains("/auth/") ||
+                path.contains("/swagger-ui") ||
+                path.contains("/v3/api-docs");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getCookies()== null || request.getHeader(HttpHeaders.AUTHORIZATION) == null || request.getServletPath().endsWith("/auth/login")){
-            filterChain.doFilter(request, response);
-            return;
-        }
 
-        try{
-            String authHeader = request.getHeader("Authorization");
-            String jwtToken = parseAuthorizationHeader(authHeader);
+        Optional<String> token = extractToken(request);
 
-            UsernamePasswordAuthenticationToken authToken = parseToken(jwtToken);
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-            filterChain.doFilter(request, response);
-        } catch (NoSuchElementException ignored) {
-            // Fallback to Authentication cookies
+        if(token.isPresent()){
             try{
-                Cookie[] cookies = request.getCookies();
-                Cookie accessCookie = Arrays.stream(cookies)
-                        .filter(cookie -> Objects.equals(cookie.getName(), "AccessToken"))
-                        .findFirst().orElseThrow();
-                UsernamePasswordAuthenticationToken authToken = parseToken(accessCookie.getValue());
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                filterChain.doFilter(request, response);
-            } catch (Exception ex) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                UsernamePasswordAuthenticationToken authenticationToken = parseToken(token.get());
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            } catch (Exception e) {
+                 log.debug("Jwt authentication failed");
+                 SecurityContextHolder.clearContext();
+
+                 response.sendError(
+                         HttpServletResponse.SC_UNAUTHORIZED,
+                         "Invalid or expired token"
+                 );
+                 return;
             }
         }
+
+        var authentication = SecurityContextHolder.getContext()
+                .getAuthentication();
+
+        log.info("Request: {}", request.getRequestURI());
+        log.info("Authenticated: {}",
+                authentication != null && authentication.isAuthenticated());
+
+        log.info("Principal: {}",
+                authentication != null ? authentication.getPrincipal() : null);
+
+        log.info("Authorities: {}",
+                authentication != null ? authentication.getAuthorities() : null);
+
+        filterChain.doFilter(request, response);
+
     }
 
-    private String parseAuthorizationHeader(String authHeader){
-        if(authHeader == null || authHeader.isEmpty())
-            throw new RuntimeException("Null or empty header");
+    private Optional<String> extractToken(HttpServletRequest request){
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        String token = authHeader.substring(7);
-        if(token.isEmpty())
-            throw new RuntimeException("Invalid token");
+        if(authorization != null && authorization.startsWith("Bearer ")){
+            return Optional.of(authorization.substring(7).trim());
+        }
 
-        return token;
+        Cookie[] cookies = request.getCookies();
+        if(cookies == null)
+            return Optional.empty();
+
+        return Arrays.stream(cookies)
+                .filter(cookie -> "AccessToken".equals(cookie.getName()))
+                .map(Cookie::getName)
+                .filter(v-> v!= null && !v.isBlank())
+                .findFirst();
     }
+
+
     private UsernamePasswordAuthenticationToken parseToken(String token){
         if(token == null || jwtUtil.isExpired(token)) {
             throw new IllegalArgumentException("Invalid token");
         }
         try{
             String blindEmailIndex = jwtUtil.extractSubject(token);
+            UUID sessionId = jwtUtil.extractSession(token);
             FixrUserSecurityDetail userSecurityDetail = detailsService.loadUserByUsername(blindEmailIndex);
+            userSecurityDetail.setSessionId(sessionId);
             return new UsernamePasswordAuthenticationToken(userSecurityDetail, null, userSecurityDetail.getAuthorities());
         } catch (UsernameNotFoundException e) {
             throw new RuntimeException(e);

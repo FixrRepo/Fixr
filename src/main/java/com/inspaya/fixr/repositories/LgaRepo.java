@@ -1,7 +1,7 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.Lga;
-import com.inspaya.fixr.entities.State;
+import com.inspaya.fixr.entities.location.Lga;
+import com.inspaya.fixr.entities.location.State;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package com.inspaya.fixr.repositories;
 
-import com.inspaya.fixr.entities.ReportMedia;
+import com.inspaya.fixr.entities.report.ReportMedia;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

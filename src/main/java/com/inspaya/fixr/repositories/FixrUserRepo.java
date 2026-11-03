@@ -28,4 +28,6 @@ public interface FixrUserRepo extends JpaRepository<FixrUser, UUID> {
     Optional<FixrUser> findByUsername(String username);
 
     boolean existsByUsername(String username);
+
+    boolean existsByBlindEmailIndex(String blindIndex);
 }
