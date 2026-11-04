@@ -45,16 +45,54 @@ This route is not declared in a controller: `JwtAuthenticationFilter` handles it
 **Request body**
 
 ```json
-{ "username": "generatedUsername", "password": "your-password" }
+{ "username": "ada@example.com", "password": "your-password" }
 ```
 
-Although the DTO property is named `username`, authentication derives the lookup key from that value as a blind index; supply the account identifier expected by the backend's authentication flow.
+Although the DTO property is named `username`, the filter hashes the supplied value as the account email blind index. Send the email address used at signup in `username` (not the generated public username).
 
 **Preconditions:** Valid JSON with `username` and `password` matching a registered account.
 
 **Success:** `200 OK`, JSON `{ "type": "Bearer", "accessToken": "…", "refreshToken": "…" }`. The backend also issues `AccessToken` and `RefreshToken` HTTP-only cookies. Access token lifetime is configured in backend security properties (30 minutes in the checked-in development configuration); refresh lifetime is configured there as well (7 days in development).
 
 **Failure:** Invalid credentials are rejected by Spring Security (normally `401 Unauthorized`).
+
+### `POST /api/v1/fixr/user/auth/refresh`
+
+Authentication: **no access token required**, but a valid refresh token is required. The endpoint accepts the `RefreshToken` HTTP-only cookie or `Authorization: Bearer <refreshToken>`.
+
+**Success:** `200 OK`. With a cookie, fresh token cookies are set and the response body is empty. With a Bearer refresh token, the response body is `JwtTokenResponseDto` (`type`, `accessToken`, `refreshToken`). Missing/invalid refresh credentials return `401 Unauthorized`.
+
+### `POST /api/v1/fixr/user/auth/logout`
+
+Authentication: **required** (access token). Revokes the current token session.
+
+**Success:** `200 OK` with an empty body. Send `Authorization: Bearer <accessToken>`; although the route is permitted past URL authorization, its operation requires an authenticated principal.
+
+### `POST /api/v1/fixr/user/auth/email/verify`
+
+Authentication: **not required**.
+
+Request body: `{ "otpCode": "123456", "email": "ada@example.com" }`.
+
+**Preconditions:** Nonblank OTP code and a syntactically valid email. The email must belong to an account and the code must be valid and unexpired.
+
+**Success:** `204 No Content` (also returned when the account is already verified). Unknown email or invalid/expired code returns `400 Bad Request`; invalid request fields also return `400`.
+
+### `POST /api/v1/fixr/user/auth/password/forgot`
+
+Authentication: **not required**.
+
+Request body: `{ "email": "ada@example.com" }`. Email must be nonblank and valid. If the account exists, the backend sends a password reset code; unknown accounts are silently ignored to avoid revealing account existence.
+
+**Success:** `202 Accepted` with an empty body.
+
+### `POST /api/v1/fixr/user/auth/password/reset`
+
+Authentication: **not required**.
+
+Request body: `{ "otpToken": "reset-code", "email": "ada@example.com", "password": "new-password", "rePassword": "new-password" }`. All values must be nonblank, email valid, passwords at least 8 characters, and both passwords must match. The reset code must be valid and unexpired.
+
+**Success:** `202 Accepted` with an empty body. Unknown email returns `202` without changing a password; invalid code or mismatched passwords results in an error response.
 
 ## Public report feed
 
@@ -86,6 +124,14 @@ Query parameters (all optional):
 **Preconditions:** `status` must be a valid enum name; pagination and order are passed to the feed service. The controller does not declare explicit range validation for these values.
 
 **Success:** `200 OK`, Spring Data `PagedModel<ReportFeedResponseDto>`. Each report has `reportId`, `description`, `location`, `reporter`, `distance`, `mediaList`, `status`, `validationStatus`, `category`, `createdAt`, `upvoteCount`, `downvoteCount`, and optionally `viewerVote` (`UPVOTE` or `DOWNVOTE`). For anonymous reports, `reporter.username` is a generated `anonymous-{reportId}` display name and `reporter.credibilityScore` is `null`; it does not link to an account. For non-anonymous reports, reporter details identify the public account. `status` is the report processing/publication lifecycle; `validationStatus` is the separate community assessment (`PROVISIONAL`, `SUPPORTED`, `DISPUTED`, or `INCONCLUSIVE`).
+
+### `GET /api/v1/fixr/feed/map`
+
+Authentication: **not required**.
+
+Query parameters: `bbox` (`minLongitude,maxLongitude,minLatitude,maxLatitude`), `group`, `status` (`ReportStatus` enum), `pageNum` (default `0`), and `pageSize` (default `40`). The controller requires all of `bbox`, `group`, and `status`; the current service implementation does not apply `status` to its database query and currently falls back to grouping by state. Use valid numeric bounds and nonnegative pagination.
+
+**Success:** `200 OK`, paged `ReportFeedResponseDto` items within the bounding box. Malformed bounds or pagination may return a client error.
 
 ### `GET /api/v1/fixr/feed/reports/{reportId}`
 
@@ -133,7 +179,7 @@ Request body: `{ "content": "Comment text", "idempotencyKey": "unique-client-key
 
 **Success:** `201 Created`, `ReportCommentResponseDto`.
 
-### `PATCH /api/v1/fixr/feed/report/{reportId}/comments/{commentId}`
+### `PATCH /api/v1/fixr/feed/reports/{reportId}/comments/{commentId}`
 
 Authentication: **required**.
 
@@ -171,6 +217,22 @@ Authentication: **required**.
 
 **Success:** `204 No Content`. If the user has not voted, the operation is a no-op. Invalid ID returns `400`; missing report returns `404`.
 
+### `PUT /api/v1/fixr/feed/reports/{reportId}/follow`
+
+Authentication: **required**. Adds the current account as a follower of the report. Repeating the request does not create another follow.
+
+**Preconditions:** `reportId` identifies an existing report.
+
+**Success:** `204 No Content`.
+
+### `PUT /api/v1/fixr/feed/reports/{reportId}/unfollow`
+
+Authentication: **required**. Removes the current account's follow; removing a nonexistent follow is a no-op.
+
+**Preconditions:** `reportId` identifies an existing report.
+
+**Success:** `204 No Content`.
+
 ## User and report management
 
 All routes in this section require authentication except signup, documented above. Account ownership is determined by the authenticated account.
@@ -187,7 +249,19 @@ Authentication: **required**. Returns the current user's `validityScore` (0–10
 
 Authentication: **required with the `MODERATOR` authority**. Returns open `VotingAbuseFlagDto` records for suspicious same-side voting bursts, reciprocal voting patterns, and repeated votes on reports by the same reporter. These are review signals only; they do not mark votes incorrect or adjust scores. Configure moderator usernames with the comma-separated `FIXR_MODERATOR_USERNAMES` environment variable.
 
-Moderators can record a review with `PATCH /api/v1/fixr/moderation/voting-abuse-flags/{flagId}` and body `{ "outcome": "NO_ACTION", "notes": "Optional review notes" }`. `outcome` is required and must be `NO_ACTION`, `CONFIRMED_SUSPICIOUS`, or `REFERRED_FOR_FURTHER_REVIEW`. Success: `204 No Content`; a reviewed flag cannot be reviewed again through this route.
+### `PATCH /api/v1/fixr/moderation/voting-abuse-flags/{flagId}`
+
+Authentication: **required with the `MODERATOR` authority**. `flagId` must be a UUID for an open flag.
+
+Request body: `{ "outcome": "NO_ACTION", "notes": "Optional review notes" }`. `outcome` is required and must be `NO_ACTION`, `CONFIRMED_SUSPICIOUS`, or `REFERRED_FOR_FURTHER_REVIEW`; `notes` is optional.
+
+**Success:** `204 No Content`. A flag that has already been reviewed cannot be reviewed again through this route.
+
+### `GET /api/v1/fixr/user/reports/media/signature`
+
+Authentication: **required**. No request body.
+
+**Success:** `200 OK`, `MediaUploadResponse` containing `signature`, `timestamp`, `expiresAt`, `apiKey`, `cloudName`, and `folder`. Use these values for a signed upload to the configured Cloudinary account; the signature expires after 20 minutes. Include the resulting media URL in report creation.
 
 ### `PATCH /api/v1/fixr/user`
 
@@ -248,8 +322,7 @@ Success: `200 OK`, paged `DuplicateCandidateResponseDto` items with `reportId`, 
 ## Response and error notes
 
 - Successful status codes above are taken from the controller/filter implementation. Validation and security failures are handled across Spring MVC/Security; exact error JSON is not standardized in the current README/source contract.
-- Public feed, leaderboard, and reports-by-username GET routes can be used without credentials. Other routes are protected by Spring Security's `anyRequest().authenticated()` rule except the explicitly permitted signup/login and API documentation routes.
+- Public feed, leaderboard, map, and reports-by-username GET routes can be used without credentials. Signup, login, refresh, email verification, and password reset POST routes are permitted by URL security; refresh still requires a valid refresh token, and logout requires an authenticated principal. Other routes require authentication; moderator routes also require the `MODERATOR` authority.
 - Public reports-by-username reads never include anonymous reports. The leaderboard includes the user's total report count, including anonymous reports, without identifying which reports are anonymous.
 - Login is handled by the custom Spring Security filter at `/api/v1/fixr/user/auth/login`; form login and HTTP Basic are disabled.
-- `PATCH /api/v1/fixr/feed/report/...` uses a singular path segment, while adjacent report routes use plural `/reports/`.
 - The account/profile and report update controller methods listed above are placeholders that currently return `null`.
