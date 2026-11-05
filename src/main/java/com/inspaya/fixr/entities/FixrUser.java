@@ -104,7 +104,7 @@ public class FixrUser {
     public FixrUser(CreateFixrUserDto userDto){
         this.firstname = userDto.firstname();
         this.lastname = userDto.lastname();
-        this.middleName = userDto.middleName();
+        this.middleName = userDto.middleName()==null? "": userDto.middleName();
         this.email = userDto.email();
         this.phoneNumber = userDto.phoneNumber();
         this.isActive = true;
