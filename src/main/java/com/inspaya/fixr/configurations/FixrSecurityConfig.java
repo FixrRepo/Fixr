@@ -84,7 +84,7 @@ public class FixrSecurityConfig {
     CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(properties.allowedOrigins());
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "PUT"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"));
         configuration.setMaxAge(3600L);
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

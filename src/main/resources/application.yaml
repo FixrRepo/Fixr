@@ -1,3 +1,5 @@
+server:
+  forward-headers-strategy: framework
 spring:
   jpa:
     show-sql: ${SHOW_SQL:false}
