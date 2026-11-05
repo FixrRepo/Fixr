@@ -34,6 +34,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         System.out.println("Attempting authentication for "+ request.getServletPath());
         try {
             UserAuthDto userAuthDto = mapper.readValue(request.getInputStream(), UserAuthDto.class);
+            if(userAuthDto.username()==null  || userAuthDto.password() == null)
+                throw new BadCredentialsException("Invalid credentials");
+
             String blindIndex = BlindIndexService.generateBlindIndex(userAuthDto.username());
             var token = new UsernamePasswordAuthenticationToken(blindIndex, userAuthDto.password());
             return Objects.requireNonNull(authenticationProvider.authenticate(token));

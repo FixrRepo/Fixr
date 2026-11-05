@@ -100,7 +100,6 @@ public class JwtTokenIssueManager {
                 .secure(properties.profile() != AppProfile.Dev)
                 .sameSite(Cookie.SameSite.LAX.attributeValue())
                 .maxAge(Duration.ofMinutes(properties.accessTokenExpirationMinutes()))
-                .domain(properties.domain())
                 .build();
         UUID session = jwtUtil.extractSession(token);
 
