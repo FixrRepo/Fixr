@@ -41,8 +41,8 @@ public class JwtTokenIssueManager {
         String refreshToken = jwtUtil.generateToken(securityDetail, refreshTokenJti, JwtUtil.TokenType.RefreshToken, session);
         ResponseCookie refreshTokenCookie = createRefreshToken(securityDetail.getUsername(), refreshTokenJti, refreshToken);
 
-        response.setHeader("Set-Cookie", accessTokenCookie.toString());
-        response.setHeader("Set-Cookie", refreshTokenCookie.toString());
+        response.addHeader("Set-Cookie", accessTokenCookie.toString());
+        response.addHeader("Set-Cookie", refreshTokenCookie.toString());
         response.getWriter().write(mapper.writeValueAsString(new JwtTokenResponseDto(
                 AuthHeaderType.Bearer,
                 accessToken,
@@ -100,6 +100,7 @@ public class JwtTokenIssueManager {
                 .secure(properties.profile() != AppProfile.Dev)
                 .sameSite(Cookie.SameSite.LAX.attributeValue())
                 .maxAge(Duration.ofMinutes(properties.accessTokenExpirationMinutes()))
+                .domain(properties.domain())
                 .build();
         UUID session = jwtUtil.extractSession(token);
 
