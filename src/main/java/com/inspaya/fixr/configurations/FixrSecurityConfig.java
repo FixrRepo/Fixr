@@ -62,6 +62,7 @@ public class FixrSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request->{
                     request.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    request.requestMatchers(HttpMethod.POST, "/api/v1/fixr/user/auth/logout").authenticated();
                     request.requestMatchers(HttpMethod.POST,"/api/v1/fixr/user/auth/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/api/v1/fixr/feed/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/api/v1/fixr/users/*/reports").permitAll();
