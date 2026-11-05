@@ -32,7 +32,7 @@ public class EmailServiceProvider implements EmailService{
         CreateEmailOptions emailOptions = CreateEmailOptions.builder()
                         .html(html)
                         .to(recipient)
-                        .from("Fixr notification <notifications.fixr.ng>")
+                        .from("Fixr notification <no-reply@notifications.fixr.ng>")
                         .subject(title)
                         .build();
 
