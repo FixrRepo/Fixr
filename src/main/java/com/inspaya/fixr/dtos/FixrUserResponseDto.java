@@ -11,5 +11,4 @@ public class FixrUserResponseDto {
     private String middleName;
     private String lastname;
     private String email;
-    private String blindEmailIndex;
 }
