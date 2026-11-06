@@ -4,6 +4,7 @@ import com.inspaya.fixr.entities.token.JwtToken;
 import com.inspaya.fixr.repositories.JwtTokenRepo;
 import com.inspaya.fixr.security.service.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenService {
     private final JwtTokenRepo repo;
 
@@ -27,7 +29,8 @@ public class JwtTokenService {
             repo.save(token);
             return true;
         }
-        repo.revokeByUser(token.getIssuedTo());
+        int revoked = repo.revokeByUser(token.getIssuedTo());
+        log.info("{} tokens were successfully revoked for user {}", revoked, token.getIssuedTo());
         // Notify user of the event
         return false;
     }
