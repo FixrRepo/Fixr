@@ -25,7 +25,6 @@ public class CloudinaryService {
 
         final Map<String, Object> params = Map.of(
                 "timestamp", timestamp,
-                "expires_at", expiresAt,
                 "folder", folder
         );
 
