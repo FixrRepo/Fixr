@@ -64,7 +64,7 @@ public class JwtTokenIssueManager {
 
         final String refreshToken = jwtTokens.refreshToken();
 
-        final HttpCookie refreshTokenCookie = createAccessToken(jwtUtil.extractSubject(refreshToken),
+        final HttpCookie refreshTokenCookie = createRefreshToken(jwtUtil.extractSubject(refreshToken),
                 jwtUtil.extractJti(refreshToken), refreshToken);
 
         final HttpHeaders headers = new HttpHeaders();
@@ -89,24 +89,20 @@ public class JwtTokenIssueManager {
         final UUID refreshTokenJti = JwtUtil.generateJti();
         final String refreshToken = jwtUtil.generateToken(fixrUser, refreshTokenJti, JwtUtil.TokenType.RefreshToken, session);
 
+        tokenService.createToken(emailBlindIndex, refreshTokenJti, JwtUtil.TokenType.RefreshToken, session);
 
         return new JwtTokenResponseDto(AuthHeaderType.Bearer, accessToken, refreshToken);
     }
 
     private ResponseCookie createAccessToken(String username, UUID jti, String token){
-        var accessToken = ResponseCookie.from("AccessToken", token)
+
+        return ResponseCookie.from("AccessToken", token)
                 .httpOnly(true)
                 .path("/")
                 .secure(properties.profile() != AppProfile.Dev)
                 .sameSite(Cookie.SameSite.LAX.attributeValue())
                 .maxAge(Duration.ofMinutes(properties.accessTokenExpirationMinutes()))
-                .domain(properties.domain())
                 .build();
-        UUID session = jwtUtil.extractSession(token);
-
-        tokenService.createToken(username, jti, JwtUtil.TokenType.AccessToken, session);
-
-        return accessToken;
     }
 
     private ResponseCookie createRefreshToken(String username, UUID jti, String token){
