@@ -112,7 +112,7 @@ public class FixrUserController {
 
     @GetMapping("/reports/media/signature")
     public ResponseEntity<MediaUploadResponse> getMediaUploadSignature(){
-        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey("/report"));
+        return ResponseEntity.ok(cloudinaryService.generateSignedUploadKey("report"));
     }
 
     @PostMapping("/reports")
