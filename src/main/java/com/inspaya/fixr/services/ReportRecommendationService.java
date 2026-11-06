@@ -53,7 +53,7 @@ public class ReportRecommendationService {
     // Recommend by status sorted by location
 
     // Blenched (System recommendation)
-    @Transactional(readOnly = true)
+    @Transactional
     public @Nullable PagedModel<ReportFeedResponseDto> getRecommendation(FeedSpecifications specs) {
 
         Pageable pageable = PageRequest.of(specs.pageNumber(), specs.pageSize(), Sort.by("createdAt").descending());
