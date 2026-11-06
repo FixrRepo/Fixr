@@ -21,6 +21,13 @@ public interface JwtTokenRepo extends JpaRepository<JwtToken, UUID> {
             """)
     int revokeByUser(@Param("user") String user);
 
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE JwtToken jt SET jt.isRevoked=true WHERE jt.issuedTo=:user AND jt.isUsed=false AND jt.session=:session
+            """)
+    int revokeByUserAndSessionId(@Param("user") String user, @Param("session") UUID session);
+
     Optional<JwtToken> findByJtiAndIsRevokedAndType(UUID jti, boolean b, JwtUtil.TokenType type);
 
     List<JwtToken> findAllBySessionId(UUID sessionId);

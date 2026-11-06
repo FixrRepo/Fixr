@@ -29,7 +29,7 @@ public class JwtTokenService {
             repo.save(token);
             return true;
         }
-        int revoked = repo.revokeByUser(token.getIssuedTo());
+        int revoked = repo.revokeByUserAndSessionId(token.getIssuedTo(), token.getSessionId());
         log.info("{} tokens were successfully revoked for user {}", revoked, token.getIssuedTo());
         // Notify user of the event
         return false;
