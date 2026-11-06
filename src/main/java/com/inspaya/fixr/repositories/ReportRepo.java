@@ -50,7 +50,7 @@ public interface ReportRepo extends JpaRepository<Report, UUID> {
     @Query("""
             SELECT r FROM Report r WHERE within(r.coordinate, :bbox) = true
             """)
-    Page<Report> findReportsWithinBox(@Param("bbox") Geometry bbox, Pageable pageable);
+    Page<Report> findReportsWithinBox(@Param("box") Geometry box, Pageable pageable);
 
     @Query(
             value = """

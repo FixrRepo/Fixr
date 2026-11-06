@@ -142,7 +142,8 @@ public class ReportService {
 
         if(boxCoordinates.size() < 4)
             throw new IllegalArgumentException("Bounding box contains too fee values");
-        GeometryFactory geometryFactory = new GeometryFactory();
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
         Envelope envelope = new Envelope(boxCoordinates.getFirst(), boxCoordinates.get(1),
                 boxCoordinates.get(2), boxCoordinates.getLast());
         Geometry box = geometryFactory.toGeometry(envelope);
