@@ -57,7 +57,8 @@ public interface ReportMapper {
     default LocationDto convertToLocation(Report report){
         CoordinateDto coordinate = new CoordinateDto(report.getCoordinate().getCoordinate().y,
                 report.getCoordinate().getCoordinate().x);
+
         return new LocationDto(coordinate, report.getState().getName(), report.getLga().getName(),
-                Objects.requireNonNull(report.getCity()).getName());
+                report.getCity() == null? "": report.getCity().getName());
     }
 }
