@@ -24,7 +24,7 @@ public interface JwtTokenRepo extends JpaRepository<JwtToken, UUID> {
     @Transactional
     @Modifying
     @Query("""
-            UPDATE JwtToken jt SET jt.isRevoked=true WHERE jt.issuedTo=:user AND jt.isUsed=false AND jt.session=:session
+            UPDATE JwtToken jt SET jt.isRevoked=true WHERE jt.issuedTo=:user AND jt.isUsed=false AND jt.sessionId=:session
             """)
     int revokeByUserAndSessionId(@Param("user") String user, @Param("session") UUID session);
 
